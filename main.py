@@ -9,10 +9,21 @@ def main ():
     pygame.init()
     clock = pygame.time.Clock()
     data = GameData()
+   
+    # Init keys (move to game init module)
     data.key_x = FireCommand()
     data.key_space = FireCommand()
-    data.key_down_pressed = MoveDown()
+
+    data.key_up_pressed = StartMoving()
+    data.key_down_pressed = StartMoving()
+    data.key_left_pressed = StartMoving()
+    data.key_right_pressed = StartMoving()
+
+    data.key_up_unpressed = StopMoving()
     data.key_down_unpressed = StopMoving()
+    data.key_left_unpressed = StopMoving()
+    data.key_right_unpressed = StopMoving()
+
     # Initialize Screen:
     screen = pygame.display.set_mode((Value.WINDOW_WIDTH, Value.WINDOW_HEIGHT))
     Image.init()
@@ -45,63 +56,51 @@ class FireCommand(Command):
   def execute(self, data):
     data.player.fireProjectile(data)
 
-class MoveDown(Command):
-  def execute(self, data):
-    data.mostRecentDir = "down"
-    data.keysPressed.append("down")
-  
+class StartMoving(Command):
+  def execute(self, data, direction):
+    data.mostRecentDir = direction 
+    data.keysPressed.append(direction)
+
 class StopMoving(Command):
-  def execute(self, data):
-    data.keysPressed.remove("down")
-    if data.mostRecentDir == "down":
+  def execute(self, data, direction):
+    data.keysPressed.remove(direction)
+    if data.mostRecentDir == direction:
       data.mostRecentDir = None
 
 def handle(event,data):
-    # print(event)
     #When you quit the window
     if event.type == pygame.QUIT:
         data.running = False
 #when you press the keysx
     if event.type == pygame.KEYDOWN:
+        # Movement keys
         if event.key == pygame.K_UP:
-            data.mostRecentDir = "up"
-            data.keysPressed.append("up")
+            data.key_up_pressed.execute(data, "up")
         if event.key == pygame.K_DOWN:
-            #data.mostRecentDir = "down"
-            #data.keysPressed.append("down")
-            data.key_down_pressed.execute(data)
+            data.key_down_pressed.execute(data, "down")
         if event.key == pygame.K_LEFT:
-            data.mostRecentDir = "left"
-            data.keysPressed.append("left")
+            data.key_left_pressed.execute(data, "left")
         if event.key == pygame.K_RIGHT:
-            data.mostRecentDir = "right"
-            data.keysPressed.append("right")
-        if event.key == pygame.K_ESCAPE:#when you press the escape button
-            data.running = False
+            data.key_right_pressed.execute(data, "right")
+        # Fire
         if event.key == pygame.K_SPACE and data.acceptInput:
             data.key_space.execute(data)
         if event.key == pygame.K_x and data.acceptInput:
             data.key_x.execute(data)
+        # Quit
+        if event.key == pygame.K_ESCAPE:
+            data.running = False
 
 #when you get off the keys
     if event.type == pygame.KEYUP:
         if event.key == pygame.K_UP:
-            data.keysPressed.remove("up")
-            if data.mostRecentDir == "up":
-                data.mostRecentDir = None
+            data.key_down_unpressed.execute(data, "up")
         if event.key == pygame.K_DOWN:
-            # data.keysPressed.remove("down")
-            #if data.mostRecentDir == "down":
-            #     data.mostRecentDir = None
-            data.key_down_unpressed.execute(data)
+            data.key_down_unpressed.execute(data, "down")
         if event.key == pygame.K_LEFT:
-            data.keysPressed.remove("left")
-            if data.mostRecentDir == "left":
-                data.mostRecentDir = None
+            data.key_down_unpressed.execute(data, "left")
         if event.key == pygame.K_RIGHT:
-            data.keysPressed.remove("right")
-            if data.mostRecentDir == "right":
-                data.mostRecentDir = None
+            data.key_down_unpressed.execute(data, "right")
         if data.mostRecentDir == None and len(data.keysPressed)> 0:
             data.mostRecentDir = data.keysPressed[-1]
 
